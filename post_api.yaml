@@ -1,0 +1,33 @@
+swagger: "2.0"
+info:
+  title: Posts API
+  description: This file describes the API for managing posts.
+  version: 1.0.0
+host: posts.apigateway.project-416223.cloud.goog
+basePath: /v1
+schemes:
+  - https
+
+security:
+  - api_key: []
+
+securityDefinitions:
+  api_key:
+    type: apiKey
+    name: key
+    in: query
+
+x-google-backend:
+  address: https://postservice.project-416223.cloud.goog
+  path_translation: APPEND_PATH_TO_ADDRESS
+  jwt_audience: postservice.project-416223.cloud.goog
+
+paths:
+  /posts:
+    get:
+      summary: Returns a list of posts.
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
