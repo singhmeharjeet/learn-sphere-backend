@@ -1,11 +1,15 @@
 const env = require("dotenv").config();
 const express = require("express");
 const app = express();
+const cors = require("cors");
 
 const admin = require("firebase-admin");
 
 const credentials = require("./key.js");
 const { v4: uuidv4 } = require("uuid");
+const { getAuth } = require("./middleware.js");
+
+const PORT = process.env.PORT || 8080;
 
 admin.initializeApp({
 	credential: admin.credential.cert(credentials.credentials),
@@ -13,9 +17,13 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
+// Middleware--------------------------------
+app.use(cors());
 app.use(express.json());
-
 app.use(express.urlencoded({ extended: true }));
+
+app.use(getAuth);
+// ------------------------------------------
 
 app.get("/", (req, res) => {
 	res.json({
@@ -120,8 +128,6 @@ app.put("/posts/update/:postId", async (req, res) => {
 	}
 });
 
-const PORT = process.env.PORT || 8080;
-
 app.listen(PORT, () => {
-	console.log(`Server is running on PORT ${PORT}...`);
+	console.log(`Post Service is listing on PORT ${PORT}...`);
 });
