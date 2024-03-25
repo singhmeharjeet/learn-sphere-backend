@@ -1,7 +1,7 @@
 // TODO: Only does authentication for now, will add authorization later
 
 module.exports.getAuth = async (req, res, next) => {
-	const cookie = req.headers.cookie;
+	const cookie = req.headers["authorization"];
 	if (!cookie) {
 		return res.status(403).json({
 			success: false,
@@ -11,7 +11,6 @@ module.exports.getAuth = async (req, res, next) => {
 
 	let token = "";
 	try {
-		console.log("Cookie: ", cookie);
 		token = cookie.split("=")[1];
 
 		if (!token) {
@@ -37,7 +36,7 @@ module.exports.getAuth = async (req, res, next) => {
 
 		const { success, message, user } = await responseFromAuth.json();
 
-		console.log(success, message, user);
+		console.log(success, message);
 		if (!success) {
 			return res.status(403).json({
 				success: false,
