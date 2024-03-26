@@ -10,7 +10,6 @@ module.exports.getAuth = async (req, res, next) => {
 			message: "No JWT token provided",
 		});
 	}
-
 	let token = "";
 	try {
 		token = cookie.split("=")[1];
@@ -30,7 +29,8 @@ module.exports.getAuth = async (req, res, next) => {
 
 	// Step 2: verify the token
 	try {
-		jwt.verify(token, process.env.MY_SECRET);
+		const user = jwt.verify(token, process.env.MY_SECRET);
+		res.locals.user = user;  //res.locals.user.role .username .iat
 		next();
 	} catch (err) {
 		if (err instanceof jwt.TokenExpiredError) {
