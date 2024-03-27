@@ -247,7 +247,8 @@ app.delete("/posts/:postId/comments/:commentId/delete", async (req, res) => {
         }
 
         const comment = comments[commentId];
-        if (role !== "admin" || username !== comment.author) {
+        
+        if (role !== "admin" || username !== comment.author || username !== postDoc.data().postedBy) {
             return res.status(403).json({ message: "Unauthorized to delete this comment" });
         }
 
