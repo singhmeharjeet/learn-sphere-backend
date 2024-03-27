@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ------------------------------------------
 
-app.get("/api/post-servie/", (req, res) => {
+app.get("/api/post-service/", (req, res) => {
 	res.json({
 		message: "Welcome to the Post Service of Learn Sphere!",
 	});
@@ -34,7 +34,7 @@ app.use(getAuth);
 
 // ---------------------------POST CREATE METHOD-------------------------
 
-app.post("/api/post-servie/posts/create", async (req, res) => {
+app.post("/api/post-service/posts/create", async (req, res) => {
 	try {
 		const { role } = res.locals.user;
 		if (role === "admin" || role === "teacher") {
@@ -68,7 +68,7 @@ app.post("/api/post-servie/posts/create", async (req, res) => {
 
 // ----------------------------GET A POST USING POST ID METHOD------------------
 
-app.get("/api/post-servie/posts/:postId", async (req, res) => {
+app.get("/api/post-service/posts/:postId", async (req, res) => {
 	try {
 		console.log(req.params);
 		const { postId } = req.params;
@@ -92,7 +92,7 @@ app.get("/api/post-servie/posts/:postId", async (req, res) => {
 
 //----------------------------GET A POST USING USER ID------------------
 
-app.get("/api/post-servie/posts/user/:userId", async (req, res) => {
+app.get("/api/post-service/posts/user/:userId", async (req, res) => {
 	try {
 		const { userId } = req.params;
 
@@ -116,7 +116,7 @@ app.get("/api/post-servie/posts/user/:userId", async (req, res) => {
 
 // ---------------------------------GETTING ALL POSTS THAT EXIST------------------------
 
-app.get("/api/post-servie/posts", async (req, res) => {
+app.get("/api/post-service/posts", async (req, res) => {
 	try {
 		const userRef = db.collection("posts");
 		const response = await userRef.get();
@@ -134,7 +134,7 @@ app.get("/api/post-servie/posts", async (req, res) => {
 });
 
 // ------------------------------------DELETING A POST BASED ON POST ID-------------------------
-app.delete("/api/post-servie/posts/delete/:postId", async (req, res) => {
+app.delete("/api/post-service/posts/delete/:postId", async (req, res) => {
 	try {
 		const { postId } = req.params;
 		const { username, role } = res.locals.user;
@@ -175,7 +175,7 @@ app.delete("/api/post-servie/posts/delete/:postId", async (req, res) => {
 });
 
 // -------------------------------------UPDATING A POST BASED ON POST ID---------------------------
-app.put("/api/post-servie/posts/update/:postId", async (req, res) => {
+app.put("/api/post-service/posts/update/:postId", async (req, res) => {
 	try {
 		const { postId } = req.params;
 		const { username, role } = res.locals.user;
@@ -207,7 +207,7 @@ app.put("/api/post-servie/posts/update/:postId", async (req, res) => {
 });
 
 //----------------------------------------COMMENT ON A POST--------------------------------------
-app.post("/api/post-servie/posts/:postId/addcomment", async (req, res) => {
+app.post("/api/post-service/posts/:postId/addcomment", async (req, res) => {
 	try {
 		const { postId } = req.params;
 		const { userId, comment } = req.body;
@@ -243,7 +243,7 @@ app.post("/api/post-servie/posts/:postId/addcomment", async (req, res) => {
 
 //----------------------------------------DELETE A COMMENT--------------------------------------
 app.delete(
-	"/api/post-servie/posts/:postId/comments/:commentId/delete",
+	"/api/post-service/posts/:postId/comments/:commentId/delete",
 	async (req, res) => {
 		try {
 			const { postId, commentId } = req.params;
