@@ -30,63 +30,37 @@ app.get("/", (req, res) => {
 		message: "Welcome to the Post Service of Learn Sphere!",
 	});
 });
-// ---------------------------POST CREATE METHOD------------------------- //need to add youtube URL, and title, possible change comments array to have comment posted by, comment id.
+// ---------------------------POST CREATE METHOD-------------------------
+
+
 app.post("/posts/create", async (req, res) => {
-	try {
-		const { username, role } = res.locals.user;
-		if(role === "admin" || role === "teacher"){
-			const image = req.body.image || "http://placehold.it/300x200";
-			const description = req.body.description || "No description";
+    try {
+        const { username, role } = res.locals.user;
+        if (role === "admin" || role === "teacher") {
+            const postJson = {
+                postId: uuidv4(),
+                createdAt: new Date(),
+                comments: {},
+                postedBy: req.body.userId,
+                image: req.body.image,
+                description: req.body.description,
+                lectureURL: req.body.lectureURL,
+                title: req.body.title
+            };
 
-			const postJson = {
-				postId: uuidv4(),
-				createdAt: new Date(),
-				comments: [],
-				postedBy: req.body.userId,
-				image: image,
-				description: description,
-			};
-			const response = await db
-				.collection("posts")
-				.doc(postJson.postId)
-				.set(postJson);
-				
-			console.log("Post has been created!: \n", postJson);
-			res.send(response);
-		}
-	} catch (error) {
-		res.send(error);
-	}
+
+            const response = await db
+                .collection("posts")
+                .doc(postJson.postId)
+                .set(postJson);
+
+            console.log("Post has been created!: \n", postJson);
+            res.send(response);
+        }
+    } catch (error) {
+        res.send(error);
+    }
 });
-
-// app.post("/posts/create", async (req, res) => {
-//     try {
-//         const { username, role } = res.locals.user;
-//         if (role === "admin" || role === "teacher") {
-//             const postJson = {
-//                 postId: uuidv4(),
-//                 createdAt: new Date(),
-//                 comments: {},
-//                 postedBy: req.body.userId,
-//                 image: req.body.image,
-//                 description: req.body.description,
-//                 lectureURL: req.body.lectureURL, // Add lectureURL field
-//                 title: req.body.title
-//             };
-
-
-//             const response = await db
-//                 .collection("posts")
-//                 .doc(postJson.postId)
-//                 .set(postJson);
-
-//             console.log("Post has been created!: \n", postJson);
-//             res.send(response);
-//         }
-//     } catch (error) {
-//         res.send(error);
-//     }
-// });
 
 
 // ----------------------------GET A POST USING POST ID METHOD------------------
@@ -225,14 +199,16 @@ app.put("/posts/update/:postId", async (req, res) => {
 app.post("/posts/:postId/addcomment", async (req, res) => {
     try {
         const { postId } = req.params;
-        const { comment } = req.body;
-//	
-//             req.body.comments.forEach(comment => {
-//             {
-//                     author: req.body.userId,
-//                     id: uuidv4(),
-//                     comment: req.body.comment
-//             }
+        const { userId, comment } = req.body;
+        const commentId = uuidv4();
+        const createdAt = new Date();
+
+        const newComment = {
+            id: commentId,
+            author: userId,
+            createdAt: createdAt,
+            comment: comment
+        };
 
         const postRef = db.collection("posts").doc(postId);
         const postDoc = await postRef.get();
@@ -241,10 +217,12 @@ app.post("/posts/:postId/addcomment", async (req, res) => {
             return res.status(404).json({ message: "Post not found" });
         }
 
-        const updatedComments = [...postDoc.data().comments, comment];
-        await postRef.update({ comments: updatedComments });
+        const comments = postDoc.data().comments || {};
+        comments[commentId] = newComment;
 
-		console.log("Comment added on",postId, comment);
+        await postRef.update({ comments: comments });
+
+        console.log("Comment added on", postId, newComment);
         return res.status(200).json({ message: "Comment added successfully" });
     } catch (error) {
         console.error("Error adding comment:", error);
@@ -265,9 +243,9 @@ app.delete("/posts/:postId/comments/:commentId/delete", async (req, res) => {
             return res.status(404).json({ message: "Post not found" });
         }
 
-        const comments = postDoc.data().comments;
+        const comments = postDoc.data().comments || {};
 
-        if (commentId === -1) {
+        if (!comments[commentId]) {
             return res.status(404).json({ message: "Comment not found" });
         }
 
@@ -277,17 +255,18 @@ app.delete("/posts/:postId/comments/:commentId/delete", async (req, res) => {
             return res.status(403).json({ message: "Unauthorized to delete this comment" });
         }
 
-        comments.splice(commentId, 1);
+        delete comments[commentId];
 
         await postRef.update({ comments });
 
-		console.log("Comment deleted on",postId, comment, "commendId:", commentId);
+        console.log("Comment deleted on", postId, comment, "commentId:", commentId);
         return res.status(200).json({ message: "Comment deleted successfully" });
     } catch (error) {
         console.error("Error deleting comment:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
 
 
 app.listen(PORT, () => {
