@@ -96,7 +96,7 @@ app.get("/api/post-service/posts/user/:userId", async (req, res) => {
         .where("postedBy", "==", userId)
         .get();
       const posts = querySnapshot.docs.map((doc) => doc.data());
-      return res.status(200).json({ success: true, message: "Posts found", posts: posts });
+      return res.status(200).json({ success: true, message: "Posts found", post: posts });
     } catch (error) {
       console.error("Error fetching posts by userId:", error);
       return res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -109,7 +109,7 @@ app.get("/api/post-service/posts", async (req, res) => {
     try {
       const querySnapshot = await db.collection("posts").get();
       const posts = querySnapshot.docs.map((doc) => doc.data());
-      return res.status(200).json({ success: true, message: "Posts found", posts: posts });
+      return res.status(200).json({ success: true, message: "Posts found", post: posts });
     } catch (error) {
       console.error("Error fetching posts:", error);
       return res.status(500).json({ success: false, message: "Internal Server Error" });
