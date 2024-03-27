@@ -147,7 +147,7 @@ app.delete("/posts/delete/:postId", async (req, res) => {
                 const response = await db.collection("posts").doc(postId).delete();
                 return res.status(200).json({ message: "Post deleted successfully" });
             } else {
-                return res.status(403).send("Permission error");
+                return res.status(403).send("Unauthorized to delete this post");
             }
         } else {
             return res.status(404).send("Post not found");
@@ -182,7 +182,7 @@ app.put("/posts/update/:postId", async (req, res) => {
             console.log("Post", postId, "has been updated", postData);   
             return res.status(200).send("Post updated successfully");
         } else {
-            return res.status(403).send("Permission error");
+            return res.status(403).send("Unauthorized to update this post");
         }
         
     } catch (error) {
@@ -248,7 +248,7 @@ app.delete("/posts/:postId/comments/:commentId/delete", async (req, res) => {
 
         const comment = comments[commentId];
         
-        if (role !== "admin" || username !== comment.author || username !== postDoc.data().postedBy) {
+        if (role !== "admin" && username !== comment.author && username !== postDoc.data().postedBy) {
             return res.status(403).json({ message: "Unauthorized to delete this comment" });
         }
 
