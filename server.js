@@ -35,7 +35,7 @@ app.get("/", (req, res) => {
 
 app.post("/posts/create", async (req, res) => {
     try {
-        const { username, role } = res.locals.user;
+        const { role } = res.locals.user;
         if (role === "admin" || role === "teacher") {
             const postJson = {
                 postId: uuidv4(),
@@ -48,42 +48,43 @@ app.post("/posts/create", async (req, res) => {
                 title: req.body.title
             };
 
-
-            const response = await db
-                .collection("posts")
-                .doc(postJson.postId)
-                .set(postJson);
+            await db.collection("posts").doc(postJson.postId).set(postJson);
 
             console.log("Post has been created!: \n", postJson);
-            res.send(response);
+            return res.status(200).json({ message: "Post created successfully", post: postJson });
+        } else {
+            return res.status(403).json({ message: "Unauthorized to create a post" });
         }
     } catch (error) {
-        res.send(error);
+        console.error("Error creating post:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
 
 
 // ----------------------------GET A POST USING POST ID METHOD------------------
 
 app.get("/posts/:postId", async (req, res) => {
-	try {
-		console.log(req.params);
-		const { postId } = req.params;
-		const query_return = await db
-			.collection("posts")
-			.where("postId", "==", postId)
-			.get();
-		if (!query_return.empty) {
-			const doc = query_return.docs[0];
-			const postData = doc.data();
-			res.json(postData);
-		} else {
-			console.log("No post found with PostID :", postId);
-			res.status(404).send("Post not found");
-		}
-	} catch (error) {
-		res.send(error);
-	}
+    try {
+        console.log(req.params);
+        const { postId } = req.params;
+        const query_return = await db
+            .collection("posts")
+            .where("postId", "==", postId)
+            .get();
+        if (!query_return.empty) {
+            const doc = query_return.docs[0];
+            const postData = doc.data();
+            return res.json(postData);
+        } else {
+            console.log("No post found with PostID :", postId);
+            return res.status(404).send("Post not found");
+        }
+    } catch (error) {
+        console.error("Error fetching post:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
 });
 
 //----------------------------GET A POST USING USER ID------------------
@@ -110,90 +111,86 @@ app.get("/posts/user/:userId", async (req, res) => {
 // ---------------------------------GETTING ALL POSTS THAT EXIST------------------------
 
 app.get("/posts", async (req, res) => {
-	try {
-		const userRef = db.collection("posts");
-		const response = await userRef.get();
-		let responseArr = [];
+    try {
+        const userRef = db.collection("posts");
+        const response = await userRef.get();
+        let responseArr = [];
 
-		response.forEach((doc) => {
-			responseArr.push(doc.data());
-		});
-		res.send(responseArr);
-	} catch (error) {
-		res.send(error);
-	}
+        response.forEach((doc) => {
+            responseArr.push(doc.data());
+        });
+
+        return res.status(200).json(responseArr);
+    } catch (error) {
+        console.error("Error fetching posts:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
 });
+
 
 // ------------------------------------DELETING A POST BASED ON POST ID-------------------------
 app.delete("/posts/delete/:postId", async (req, res) => {
-	try {
-		const { postId } = req.params;
-		const { username, role } = res.locals.user;
+    try {
+        const { postId } = req.params;
+        const { username, role } = res.locals.user;
 
-		const query_return = await db
-			.collection("posts")
-			.where("postId", "==", postId)
-			.get();
-		
-		if (!query_return.empty) {
-			const doc = query_return.docs[0];
-			const postData = doc.data();
-			if(role === "admin" || username === postData.postedBy){
-				console.log("Deleting post with postId", postId, "deleted by", username, role);
-				const response = await db.collection("posts").doc(postId).delete();
-				res.send(response);
-			} else{
-				res.send("Permission error");
-			}
-		} else {
-			res.status(404).send("Post not found");
-		}
-		
-		
-	} catch (error) {
-		res.send(error);
-	}
+        const query_return = await db
+            .collection("posts")
+            .where("postId", "==", postId)
+            .get();
+
+        if (!query_return.empty) {
+            const doc = query_return.docs[0];
+            const postData = doc.data();
+            if (role === "admin" || username === postData.postedBy) {
+                console.log("Deleting post with postId", postId, "deleted by", username, role);
+                const response = await db.collection("posts").doc(postId).delete();
+                return res.status(200).json({ message: "Post deleted successfully" });
+            } else {
+                return res.status(403).send("Permission error");
+            }
+        } else {
+            return res.status(404).send("Post not found");
+        }
+    } catch (error) {
+        console.error("Error deleting post:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
 });
+
 
 // -------------------------------------UPDATING A POST BASED ON POST ID---------------------------
 app.put("/posts/update/:postId", async (req, res) => {
-	try {
-		const { postId } = req.params;
-		const { username, role } = res.locals.user;
+    try {
+        const { postId } = req.params;
+        const { username, role } = res.locals.user;
 
-		const updateFields = req.body;
+        const updateFields = req.body;
 
-		const postRef = db.collection("posts").doc(postId);
-		const postDoc = await postRef.get();
-		if (!postDoc.exists) {
-			return res.status(404).send("Post not found");
-		}
+        const postRef = db.collection("posts").doc(postId);
+        const postDoc = await postRef.get();
+        
+        if (!postDoc.exists) {
+            return res.status(404).send("Post not found");
+        }
 
-		const query_return = await db
-			.collection("posts")
-			.where("postId", "==", postId)
-			.get();
-		if (!query_return.empty) {
-			const doc = query_return.docs[0];
-			const postData = doc.data();
-			if(role === admin || username === postData.postedBy){ //permissions
+        const postData = postDoc.data();
 
-				const updatedPostData = { ...postDoc.data(), ...updateFields };
-				await postRef.update(updatedPostData);
-				console.log("Post",postId,"has been updated", postData);	
-				res.status(200).send("Post updated successfully");
-
-			} else{
-				res.send("Permission error");
-			}
-		}
-
-		
-	} catch (error) {
-		console.error("Error updating post:", error);
-		res.status(500).send("Internal Server Error");
-	}
+        if (role === "admin" || username === postData.postedBy) { // Check permissions
+            const updatedPostData = { ...postData, ...updateFields };
+            await postRef.update(updatedPostData);
+            console.log("Post", postId, "has been updated", postData);   
+            return res.status(200).send("Post updated successfully");
+        } else {
+            return res.status(403).send("Permission error");
+        }
+        
+    } catch (error) {
+        console.error("Error updating post:", error);
+        return res.status(500).send("Internal Server Error");
+    }
 });
+
 
 //----------------------------------------COMMENT ON A POST--------------------------------------
 app.post("/posts/:postId/addcomment", async (req, res) => {
@@ -250,8 +247,7 @@ app.delete("/posts/:postId/comments/:commentId/delete", async (req, res) => {
         }
 
         const comment = comments[commentId];
-
-        if (role !== "admin") {
+        if (role !== "admin" || username !== comment.author) {
             return res.status(403).json({ message: "Unauthorized to delete this comment" });
         }
 
@@ -259,13 +255,14 @@ app.delete("/posts/:postId/comments/:commentId/delete", async (req, res) => {
 
         await postRef.update({ comments });
 
-        console.log("Comment deleted on", postId, comment, "commentId:", commentId);
+        console.log("Comment deleted on", postId, "Comment:", commentId);
         return res.status(200).json({ message: "Comment deleted successfully" });
     } catch (error) {
         console.error("Error deleting comment:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
 
 
 
