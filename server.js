@@ -36,8 +36,8 @@ app.use(getAuth);
 
 app.post("/api/post-service/posts/create", async (req, res) => {
 	try {
-		const { role } = res.locals.user;
-		if (role !== "admin" && role !== "teacher") {
+		const { username, role } = res.locals.user;
+		if (role !== "teacher") {
 			return res.status(403).json({ succes:false, message: "Unauthorized to create a post" });
 		}
 
@@ -45,7 +45,7 @@ app.post("/api/post-service/posts/create", async (req, res) => {
             postId: uuidv4(),
             createdAt: new Date(),
             comments: {},
-            postedBy: req.body.userId,
+            postedBy: username,
             image: req.body.image,
             description: req.body.description,
             lectureURL: req.body.lectureURL,
@@ -121,8 +121,7 @@ app.delete("/api/post-service/posts/delete/:postId", async (req, res) => {
 	try {
 		const { postId } = req.params;
 		const { username, role } = res.locals.user;
-
-
+        
         const postRef = db.collection("posts").doc(postId);
 		const postDoc = await postRef.get();
 
@@ -159,13 +158,13 @@ app.put("/api/post-service/posts/update/:postId", async (req, res) => {
 
 		const postRef = db.collection("posts").doc(postId);
 		const postDoc = await postRef.get();
-
+    
 		if (!postDoc.exists) {
 			return res.status(404).json({ success: false, message: "Post not found" });
 		}
-
+    console.log("Post");
 		const postData = postDoc.data();
-
+    
 		if (role !== "admin" && username !== postData.postedBy) { //Permissions
             return res.status(403).json({ success: false, message: "Unauthorized to update this post" });
         }
@@ -185,6 +184,7 @@ app.put("/api/post-service/posts/update/:postId", async (req, res) => {
 //----------------------------------------COMMENT ON A POST--------------------------------------
 app.post("/api/post-service/posts/:postId/addcomment", async (req, res) => {
 	try {
+    const { username, role } = res.locals.user;
 		const { postId } = req.params;
 		const { userId, comment } = req.body;
 		const commentId = uuidv4();
@@ -192,7 +192,7 @@ app.post("/api/post-service/posts/:postId/addcomment", async (req, res) => {
 
 		const newComment = {
 			id: commentId,
-			author: userId,
+			author: username,
 			createdAt: createdAt,
 			comment: comment,
 		};
