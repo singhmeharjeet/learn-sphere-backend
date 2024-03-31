@@ -105,6 +105,7 @@ app.get("/api/post-service/posts/:postId", async (req, res) => {
 app.get("/api/post-service/posts/user/:userId", async (req, res) => {
 	try {
 		const { userId } = req.params;
+		console.log("userID: ", req.params);
 		const querySnapshot = await db
 			.collection("posts")
 			.where("postedBy", "==", userId)
@@ -235,16 +236,14 @@ app.put("/api/post-service/posts/update/:postId", async (req, res) => {
 //----------------------------------------COMMENT ON A POST--------------------------------------
 app.post("/api/post-service/posts/:postId/addcomment", async (req, res) => {
 	try {
-		const { username, role } = res.locals.user;
 		const { postId } = req.params;
 		const { userId, comment } = req.body;
-		const commentId = uuidv4();
-		const createdAt = new Date();
 
+		const commentId = uuidv4();
 		const newComment = {
 			id: commentId,
-			author: username,
-			createdAt: createdAt,
+			createdAt: new Date(),
+			author: userId,
 			comment: comment,
 		};
 
@@ -259,15 +258,17 @@ app.post("/api/post-service/posts/:postId/addcomment", async (req, res) => {
 
 		const postData = postDoc.data();
 
-		const comments = postData.comments || {};
-		comments[commentId] = newComment;
+		const comments = postData.comments || [];
 
-		await postRef.update({ comments: comments });
+		await postRef.update({ comments: [...comments, newComment] });
 
-		console.log("Comment added on", postId, newComment);
 		return res
 			.status(200)
-			.json({ success: true, message: "Comment added successfully" });
+			.json({
+				success: true,
+				message: "Comment added successfully",
+				comment: newComment,
+			});
 	} catch (error) {
 		console.error("Error adding comment:", error);
 		return res
