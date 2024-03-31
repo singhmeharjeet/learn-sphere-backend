@@ -57,7 +57,6 @@ app.post("/api/post-service/posts/create", async (req, res) => {
 
 		await db.collection("posts").doc(postJson.postId).set(postJson);
 
-		console.log("Sending correct response with postJson:", postJson);
 		return res.status(200).json({
 			success: true,
 			message: "Post created successfully",
@@ -105,7 +104,7 @@ app.get("/api/post-service/posts/:postId", async (req, res) => {
 app.get("/api/post-service/posts/user/:userId", async (req, res) => {
 	try {
 		const { userId } = req.params;
-		console.log("userID: ", req.params);
+
 		const querySnapshot = await db
 			.collection("posts")
 			.where("postedBy", "==", userId)
@@ -262,13 +261,11 @@ app.post("/api/post-service/posts/:postId/addcomment", async (req, res) => {
 
 		await postRef.update({ comments: [...comments, newComment] });
 
-		return res
-			.status(200)
-			.json({
-				success: true,
-				message: "Comment added successfully",
-				comment: newComment,
-			});
+		return res.status(200).json({
+			success: true,
+			message: "Comment added successfully",
+			comment: newComment,
+		});
 	} catch (error) {
 		console.error("Error adding comment:", error);
 		return res
@@ -295,15 +292,22 @@ app.delete(
 			}
 
 			const postData = postDoc.data();
-			const comments = postData.comments || {};
+			const comments = postData.comments || [];
 
-			if (!comments[commentId]) {
+			let commentPosition = -1;
+			comments.forEach((comment, index) => {
+				if (comment.id === commentId) {
+					commentPosition = index;
+				}
+			});
+
+			if (commentPosition === -1) {
 				return res
 					.status(404)
 					.json({ success: false, message: "Comment not found" });
 			}
 
-			const comment = comments[commentId];
+			const comment = comments[commentPosition];
 
 			if (
 				role !== "admin" &&
@@ -316,9 +320,13 @@ app.delete(
 				});
 			}
 
-			delete comments[commentId];
+			const updatedComments = comments.filter((c, index) => {
+				if (index !== commentPosition) {
+					return c;
+				}
+			});
 
-			await postRef.update({ comments });
+			await postRef.update({ comments: updatedComments });
 
 			console.log("Comment deleted on", postId, "Comment:", commentId);
 			return res.status(200).json({
