@@ -133,3 +133,10 @@ Delete a Comment
 Error Handling
 
 In case of errors, appropriate HTTP status codes are returned along with error messages in the response body.
+
+Contributors
+- [Dalveer Dosanjh](https://github.com/dal-dos)
+- [Arjun Singh](https://github.com/ashokar19)
+- [Meharjeet Singh](https://github.com/singhmeharjeet)
+- [Akash Devgan](https://github.com/Akashdevgan02)
+- [Gursahib Badwal](https://github.com/gursahib-badwal)
